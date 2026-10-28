@@ -1,0 +1,16 @@
+{
+  "name": "Micro-TIL",
+  "short_name": "MicroTIL",
+  "description": "Quick mobile TIL logger and GitHub streak keeper",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#238636",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

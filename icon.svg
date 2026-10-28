@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#161b22" />
+      <stop offset="100%" stop-color="#0d1117" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2ea043" />
+      <stop offset="100%" stop-color="#238636" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#bg)" stroke="#30363d" stroke-width="16"/>
+  <!-- GitHub Green Spark & Lightning/Pen Icon -->
+  <circle cx="256" cy="180" r="70" fill="url(#accent)" opacity="0.2"/>
+  <path d="M256 120 L270 160 L310 174 L270 188 L256 228 L242 188 L202 174 L242 160 Z" fill="#3fb950"/>
+  <!-- Notebook / Commit Tree symbol -->
+  <path d="M160 260 C160 250 170 240 180 240 L332 240 C342 240 352 250 352 260 L352 370 C352 380 342 390 332 390 L180 390 C170 390 160 380 160 370 Z" fill="#21262d" stroke="#3fb950" stroke-width="12"/>
+  <line x1="200" y1="290" x2="312" y2="290" stroke="#8b949e" stroke-width="10" stroke-linecap="round"/>
+  <line x1="200" y1="325" x2="280" y2="325" stroke="#8b949e" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="310" cy="355" r="10" fill="#3fb950"/>
+</svg>

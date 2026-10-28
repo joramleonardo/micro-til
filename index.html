@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Micro-TIL | Quick Mobile Commits</title>
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MicroTIL">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo">
+          <img src="icon.svg" alt="Micro-TIL Logo" width="28" height="28">
+        </div>
+        <div>
+          <h1>Micro-TIL</h1>
+          <div class="status-indicator" id="repoStatus">
+            <span class="status-dot"></span>
+            <span class="status-text">Not configured</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="themeToggleBtn" class="icon-btn" title="Toggle Theme" aria-label="Toggle Theme">
+          🌙
+        </button>
+        <button id="navSettingsBtn" class="icon-btn" title="Settings" aria-label="Open Settings">
+          ⚙️
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="writeTab">
+        <span class="tab-icon">✏️</span> Write TIL
+      </button>
+      <button class="tab-btn" data-tab="historyTab">
+        <span class="tab-icon">📜</span> History
+      </button>
+      <button class="tab-btn" data-tab="settingsTab">
+        <span class="tab-icon">⚙️</span> Settings
+      </button>
+    </nav>
+
+    <!-- Tab 1: Write View -->
+    <main class="tab-pane active" id="writeTab">
+      <div id="setupBanner" class="alert-box banner hidden">
+        <span>⚠️ GitHub token or repo not configured yet!</span>
+        <button id="openSettingsFromBanner" class="btn btn-sm">Configure</button>
+      </div>
+
+      <form id="tilForm">
+        <!-- Category Pill selector -->
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <div class="category-pills" id="categoryPills">
+            <button type="button" class="pill active" data-cat="💡 Insight">💡 Insight</button>
+            <button type="button" class="pill" data-cat="📖 Article">📖 Article</button>
+            <button type="button" class="pill" data-cat="🐛 Bug Fix">🐛 Bug Fix</button>
+            <button type="button" class="pill" data-cat="⚙️ Tech Tip">⚙️ Tech Tip</button>
+            <button type="button" class="pill" data-cat="🚀 Project">🚀 Project</button>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="tilTitle" class="form-label">Title / Topic</label>
+            <span class="char-hint" id="titleCharCount">0/80</span>
+          </div>
+          <input 
+            type="text" 
+            id="tilTitle" 
+            placeholder="e.g. Learned how Docker multi-stage builds work" 
+            maxlength="100" 
+            required 
+            autocomplete="off"
+          />
+        </div>
+
+        <!-- Formatting quick bar -->
+        <div class="quick-tools">
+          <button type="button" class="tool-btn" data-tool="code" title="Insert Code">`code`</button>
+          <button type="button" class="tool-btn" data-tool="bullet" title="Insert Bullet">• list</button>
+          <button type="button" class="tool-btn" data-tool="quote" title="Insert Quote">&gt; quote</button>
+          <button type="button" class="tool-btn" data-tool="link" title="Insert Link">[link]</button>
+          <button type="button" class="tool-btn" data-tool="bold" title="Insert Bold">**B**</button>
+        </div>
+
+        <!-- Content -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="tilBody" class="form-label">Notes / What you learned</label>
+            <span class="autosave-tag" id="autosaveStatus">Draft saved</span>
+          </div>
+          <textarea 
+            id="tilBody" 
+            rows="5" 
+            placeholder="Write 1-3 sentences or key bullet points. Markdown is supported." 
+            required
+          ></textarea>
+        </div>
+
+        <!-- Optional Reference URL -->
+        <div class="form-group">
+          <label for="tilUrl" class="form-label">Reference Link (Optional)</label>
+          <input 
+            type="url" 
+            id="tilUrl" 
+            placeholder="https://..." 
+            autocomplete="off"
+          />
+        </div>
+
+        <!-- Target Info Box -->
+        <div class="target-badge">
+          <span>Target:</span>
+          <code id="targetFileDisplay">username/repo → TIL.md</code>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="action-footer">
+          <button type="submit" id="submitBtn" class="btn btn-primary btn-block">
+            <span class="btn-spinner hidden" id="btnSpinner"></span>
+            <span class="btn-text" id="btnText">🚀 Push Commit to GitHub</span>
+          </button>
+        </div>
+      </form>
+    </main>
+
+    <!-- Tab 2: History View -->
+    <section class="tab-pane" id="historyTab">
+      <div class="history-header">
+        <h2>Recent TIL Commits</h2>
+        <button id="refreshHistoryBtn" class="btn btn-sm btn-secondary">🔄 Refresh</button>
+      </div>
+      <div id="historyLoading" class="loader-box hidden">
+        <div class="spinner"></div>
+        <p>Fetching commits from GitHub...</p>
+      </div>
+      <div id="historyEmpty" class="empty-state hidden">
+        <p>No commits recorded yet or repository not connected.</p>
+      </div>
+      <div id="historyList" class="history-list"></div>
+    </section>
+
+    <!-- Tab 3: Settings View -->
+    <section class="tab-pane" id="settingsTab">
+      <h2>GitHub Configuration</h2>
+      <p class="section-desc">
+        Your token is stored locally on this device's browser only. It is never transmitted anywhere except directly to <code>api.github.com</code>.
+      </p>
+
+      <form id="settingsForm">
+        <div class="form-group">
+          <label for="ghUsername" class="form-label">GitHub Username</label>
+          <input type="text" id="ghUsername" placeholder="e.g. octocat" required autocomplete="username" />
+        </div>
+
+        <div class="form-group">
+          <label for="ghRepo" class="form-label">Repository Name</label>
+          <input type="text" id="ghRepo" placeholder="e.g. til or my-notes" required autocomplete="off" />
+          <span class="help-text">The repo where you want your TIL entries to be committed.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="ghBranch" class="form-label">Branch</label>
+          <input type="text" id="ghBranch" placeholder="main" value="main" required autocomplete="off" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Commit File Strategy</label>
+          <div class="radio-card-group">
+            <label class="radio-card">
+              <input type="radio" name="strategy" value="single" checked />
+              <div class="card-text">
+                <strong>Append to Single File (Default)</strong>
+                <span>Appends every new TIL to a single markdown file (e.g. <code>TIL.md</code>).</span>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="strategy" value="daily" />
+              <div class="card-text">
+                <strong>Daily File Mode</strong>
+                <span>Creates or appends to a dated file (e.g. <code>til/2026-10-28.md</code>).</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" id="filePathGroup">
+          <label for="ghFilePath" class="form-label">Target File Path</label>
+          <input type="text" id="ghFilePath" placeholder="TIL.md" value="TIL.md" required autocomplete="off" />
+        </div>
+
+        <div class="form-group">
+          <label for="ghToken" class="form-label">Personal Access Token (PAT)</label>
+          <div class="input-with-action">
+            <input 
+              type="password" 
+              id="ghToken" 
+              placeholder="github_pat_... or ghp_..." 
+              required 
+              autocomplete="current-password"
+            />
+            <button type="button" id="toggleTokenVisibility" class="btn btn-sm btn-secondary">Show</button>
+          </div>
+          <span class="help-text">Requires <code>Contents: Read & Write</code> permission.</span>
+        </div>
+
+        <div class="action-footer">
+          <button type="button" id="testConnBtn" class="btn btn-secondary btn-block">
+            🔍 Test Connection
+          </button>
+          <button type="submit" class="btn btn-primary btn-block">
+            💾 Save Settings
+          </button>
+        </div>
+      </form>
+
+      <div class="danger-zone">
+        <h3>Reset</h3>
+        <p>Clear saved token and credentials from this browser.</p>
+        <button type="button" id="clearDataBtn" class="btn btn-danger btn-sm">Clear All Local Data</button>
+      </div>
+    </section>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-icon">🎉</div>
+        <h3>Committed to GitHub!</h3>
+        <p id="modalCommitMsg">Your TIL was pushed successfully.</p>
+        <div class="modal-meta" id="modalMeta">
+          <div><strong>File:</strong> <span id="modalFile">TIL.md</span></div>
+          <div><strong>Commit:</strong> <code id="modalSha">a1b2c3d</code></div>
+        </div>
+        <div class="modal-actions">
+          <a id="modalGhLink" href="#" target="_blank" rel="noopener" class="btn btn-secondary">
+            View on GitHub ↗
+          </a>
+          <button type="button" id="modalCloseBtn" class="btn btn-primary">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
