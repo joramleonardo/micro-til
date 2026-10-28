@@ -1,0 +1,48 @@
+# Hostinger Apache Configuration for Micro-TIL
+
+# 1. Force HTTPS
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# 2. MIME Types
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest .json
+    AddType image/svg+xml .svg .svgz
+    AddType text/javascript .js
+    AddType text/css .css
+</IfModule>
+
+# 3. Cache Control
+<IfModule mod_headers.c>
+    # Never cache Service Worker & HTML files so updates are instant
+    <FilesMatch "\.(html|htm|json)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </FilesMatch>
+    
+    <FilesMatch "sw\.js$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+        Header set Service-Worker-Allowed "/"
+    </FilesMatch>
+
+    # Cache static assets (CSS, JS, SVG, icons)
+    <FilesMatch "\.(css|js|svg|png|jpg|ico)$">
+        Header set Cache-Control "max-age=604800, public"
+    </FilesMatch>
+</IfModule>
+
+# 4. Security Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# 5. Disable Directory Browsing
+Options -Indexes

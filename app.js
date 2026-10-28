@@ -14,7 +14,8 @@
     DRAFT_TITLE: 'micro_til_draft_title',
     DRAFT_BODY: 'micro_til_draft_body',
     DRAFT_URL: 'micro_til_draft_url',
-    DRAFT_CAT: 'micro_til_draft_cat'
+    DRAFT_CAT: 'micro_til_draft_cat',
+    PIN: 'micro_til_pin'
   };
 
   // State
@@ -25,6 +26,12 @@
     filePath: localStorage.getItem(STORAGE_KEYS.FILE_PATH) || 'TIL.md',
     strategy: localStorage.getItem(STORAGE_KEYS.STRATEGY) || 'single',
     token: localStorage.getItem(STORAGE_KEYS.TOKEN) || ''
+  };
+
+  let serverMode = {
+    available: false,
+    hasPin: false,
+    repo: null
   };
 
   let activeCategory = localStorage.getItem(STORAGE_KEYS.DRAFT_CAT) || '💡 Insight';
@@ -46,6 +53,8 @@
     titleCharCount: document.getElementById('titleCharCount'),
     tilBody: document.getElementById('tilBody'),
     tilUrl: document.getElementById('tilUrl'),
+    pinGroup: document.getElementById('pinGroup'),
+    appPin: document.getElementById('appPin'),
     autosaveStatus: document.getElementById('autosaveStatus'),
     targetFileDisplay: document.getElementById('targetFileDisplay'),
     submitBtn: document.getElementById('submitBtn'),
@@ -454,7 +463,7 @@
     elements.tilForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      if (!config.token || !config.username || !config.repo) {
+      if (!serverMode.available && (!config.token || !config.username || !config.repo)) {
         showToast('Please configure GitHub settings first!', 'error');
         switchTab('settingsTab');
         return;
@@ -475,18 +484,48 @@
       elements.btnText.textContent = 'Pushing to GitHub...';
 
       try {
-        const result = await commitToGitHub({
-          category: activeCategory,
-          title,
-          body,
-          url
-        });
+        let result;
+
+        if (serverMode.available) {
+          // Hostinger Backend Mode
+          const pin = elements.appPin ? elements.appPin.value.trim() : '';
+          if (serverMode.hasPin && !pin) {
+            throw new Error('Please enter your Security PIN.');
+          }
+          if (pin) localStorage.setItem(STORAGE_KEYS.PIN, pin);
+
+          const res = await fetch('api/commit.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              category: activeCategory,
+              title,
+              body,
+              url,
+              pin
+            })
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || `Server error: ${res.status}`);
+          }
+          result = data;
+        } else {
+          // Client-Side GitHub API Mode
+          result = await commitToGitHub({
+            category: activeCategory,
+            title,
+            body,
+            url
+          });
+        }
 
         // Show Success Modal
         elements.modalCommitMsg.textContent = result.commitMessage;
         elements.modalFile.textContent = result.filePath;
-        elements.modalSha.textContent = result.commitSha.substring(0, 7);
-        elements.modalGhLink.href = result.htmlUrl;
+        elements.modalSha.textContent = result.commitSha ? result.commitSha.substring(0, 7) : 'latest';
+        elements.modalGhLink.href = result.htmlUrl || `https://github.com/${config.username}/${config.repo}`;
         elements.successModal.classList.remove('hidden');
 
         clearDraft();
@@ -612,6 +651,35 @@
     }
   }
 
+  // Check if Hostinger PHP backend is active
+  async function checkServerBackend() {
+    try {
+      const res = await fetch('api/commit.php');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.server_mode) {
+          serverMode.available = true;
+          serverMode.hasPin = data.has_pin;
+          serverMode.repo = data.repo;
+          if (data.strategy) config.strategy = data.strategy;
+
+          if (data.has_pin && elements.pinGroup) {
+            elements.pinGroup.classList.remove('hidden');
+            const savedPin = localStorage.getItem(STORAGE_KEYS.PIN);
+            if (savedPin && elements.appPin) elements.appPin.value = savedPin;
+          }
+
+          elements.setupBanner.classList.add('hidden');
+          elements.repoStatus.className = 'status-indicator connected';
+          elements.repoStatus.querySelector('.status-text').textContent = `Hostinger (${data.repo})`;
+          elements.targetFileDisplay.textContent = `Hostinger Backend → ${data.repo}`;
+        }
+      }
+    } catch (e) {
+      // Direct client mode will be used
+    }
+  }
+
   // Init App
   function init() {
     initTheme();
@@ -620,6 +688,7 @@
     updateTargetDisplay();
     initListeners();
     registerServiceWorker();
+    checkServerBackend();
   }
 
   init();

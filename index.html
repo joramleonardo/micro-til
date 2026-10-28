@@ -121,6 +121,20 @@
           />
         </div>
 
+        <!-- Security PIN (Displayed if Hostinger Server Mode requires PIN) -->
+        <div class="form-group hidden" id="pinGroup">
+          <label for="appPin" class="form-label">Hostinger Security PIN</label>
+          <input 
+            type="password" 
+            id="appPin" 
+            placeholder="Enter your security PIN" 
+            inputmode="numeric" 
+            maxlength="20"
+            autocomplete="current-password"
+          />
+          <span class="help-text">Protects your public Hostinger URL from unauthorized commits.</span>
+        </div>
+
         <!-- Target Info Box -->
         <div class="target-badge">
           <span>Target:</span>
